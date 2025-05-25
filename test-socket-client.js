@@ -1,21 +1,16 @@
 const { io } = require("socket.io-client");
 
+// Add your driverId here
+const driverId = "driver_abc_123"; // Ideally unique per driver
+
 const socket = io("wss://realtime-server-production-c92a.up.railway.app", {
   transports: ["websocket"],
+  auth: {
+    driverId, // ✅ Sent to server
+  },
 });
 
 socket.on("connect", () => {
   console.log("✅ Connected to socket server:", socket.id);
-});
-
-socket.on("driverLocation", (data) => {
-  console.log("📍 Received driver location:", data);
-});
-
-socket.on("disconnect", (reason) => {
-  console.warn("❌ Disconnected from socket server:", reason);
-});
-
-socket.on("connect_error", (error) => {
-  console.error("⚠️ Connection error:", error.message);
+  console.log("👤 Driver ID used:", driverId); // ✅ Log what you sent
 });
