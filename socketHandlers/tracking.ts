@@ -1,17 +1,22 @@
-export const registerTrackingHandlers = (io: any, socket: any) => {
-  socket.on('joinDriverRoom', (driverId: string) => {
-    socket.join(`driver:${driverId}`);
-  });
+// realtime-server/socketHandlers/tracking.ts
+import { Server, Socket } from 'socket.io';
 
-  socket.on('driverLocationUpdate', ({ driverId, coords }: { driverId: string; coords: { lat: number; lng: number } }) => {
-    io.to(`driver:${driverId}`).emit('driverLocation', { coords });
-  });
+type Coords = {
+  lat: number;
+  lng: number;
+};
 
-  socket.on('joinOrderTrackingRoom', (orderId: string) => {
-    socket.join(`tracking:${orderId}`);
-  });
+export const registerTrackingHandlers = (io: Server, socket: Socket): void => {
+  // Listen for driver location updates
+  socket.on('driverLocationUpdate', ({ driverId, coords }: { driverId: string; coords: Coords }) => {
+    if (!driverId || !coords) {
+      console.warn('Malformed location update payload.');
+      return;
+    }
 
-  socket.on('updateOrderDriverLocation', ({ orderId, coords }: { orderId: string; coords: { lat: number; lng: number } }) => {
-    io.to(`tracking:${orderId}`).emit('driverLocationUpdate', { coords });
+    console.log(`Driver ${driverId} updated location:`, coords);
+
+    // Broadcast the location update to all connected clients (or handle as needed)
+    io.emit('driverLocation', { driverId, coords });
   });
 };

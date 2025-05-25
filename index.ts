@@ -1,7 +1,8 @@
 import express from 'express';
 import http from 'http';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import dotenv from 'dotenv';
+import { registerTrackingHandlers } from './socketHandlers/tracking';
 
 dotenv.config();
 
@@ -10,13 +11,15 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: '*', // For now, allow all origins. Lock this down later.
+    origin: '*', // 🔒 Lock down in production
     methods: ['GET', 'POST'],
   },
 });
 
-io.on('connection', (socket) => {
+io.on('connection', (socket: Socket) => {
   console.log('Client connected:', socket.id);
+
+  registerTrackingHandlers(io, socket); // ← Use your modular handler
 
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
