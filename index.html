@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Driver Tracker</title>
+</head>
+<body>
+  <h1>Driver Location Test</h1>
+  <button id="send-location">Send Test Location</button>
+  <pre id="log"></pre>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const log = (msg) => {
+      const logElem = document.getElementById('log');
+      logElem.textContent += msg + '\n';
+    };
+
+    // Replace this with your actual deployed WebSocket server URL
+    const socket = io('https://realtime-server-production-c92a.up.railway.app/', {
+      transports: ['websocket'],
+    });
+
+    socket.on('connect', () => {
+      log(`Connected to server with ID: ${socket.id}`);
+    });
+
+    socket.on('driverLocation', (data) => {
+      log(`📍 Received driver location: ${JSON.stringify(data)}`);
+    });
+
+    document.getElementById('send-location').addEventListener('click', () => {
+      const driverData = {
+        driverId: 'driver123',
+        coords: {
+          lat: 37.7749,
+          lng: -122.4194
+        }
+      };
+      socket.emit('driverLocationUpdate', driverData);
+      log(`📤 Sent driverLocationUpdate: ${JSON.stringify(driverData)}`);
+    });
+  </script>
+</body>
+</html>

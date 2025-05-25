@@ -1,22 +1,33 @@
-// realtime-server/socketHandlers/tracking.ts
 import { Server, Socket } from 'socket.io';
 
-type Coords = {
-  lat: number;
-  lng: number;
-};
+export function registerTrackingHandlers(io: Server, socket: Socket) {
+  const driverId = socket.handshake.auth?.driverId;
 
-export const registerTrackingHandlers = (io: Server, socket: Socket): void => {
-  // Listen for driver location updates
-  socket.on('driverLocationUpdate', ({ driverId, coords }: { driverId: string; coords: Coords }) => {
-    if (!driverId || !coords) {
-      console.warn('Malformed location update payload.');
+  if (!driverId) {
+    console.warn('❌ Unauthorized connection attempt. No driverId.');
+    socket.emit('unauthorized', { message: 'Missing driverId' });
+    socket.disconnect();
+    return;
+  }
+
+  console.log(`✅ Driver connected: ${driverId} via socket ${socket.id}`);
+
+  socket.on('driverLocation', ({ coords }: { coords: { lat: number; lng: number } }) => {
+    if (!coords || typeof coords.lat !== 'number' || typeof coords.lng !== 'number') {
+      console.warn(`⚠️ Invalid location data from ${driverId}`);
       return;
     }
 
-    console.log(`Driver ${driverId} updated location:`, coords);
+    console.log(`📍 Location update from ${driverId}:`, coords);
 
-    // Broadcast the location update to all connected clients (or handle as needed)
-    io.emit('driverLocation', { driverId, coords });
+    // OPTIONAL: Emit only to subscribers of this driver
+    io.emit('driverLocation', {
+      driverId,
+      coords,
+    });
   });
-};
+
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ Driver ${driverId} disconnected. Reason: ${reason}`);
+  });
+}
